@@ -1,0 +1,570 @@
+sqoop import --connect jdbc:mysql://localhost/sqoop --username root --password cloudera --target-dir 'emp_hdfs' --table emp --m 1
+
+oozie job -oozie http://quickstart.cloudera:11000/oozie -config /home/cloudera/Desktop/Oozie/sqoopwf/job.properties -run
+
+oozie job -oozie http://localhost:11000 -log 0000000-170705022807144-oozie-oozi-W
+
+sqoop import --connect jdbc:mysql://localhost/sqoop --username root --password cloudera  --table emp  --target-dir 'emp_data' --m 1 --hive-import --hive-table emp_sqoop
+
+sqoop import -Dmapred.job.queue.name=pr  --connect "jdbc:oracle:thin:@localhost:1521/oracle_database" \
+--username "user" --password "password" --table osoba --hive-import \
+--hive-table pk.pk_osoba --delete-target-dir --hive-overwrite \
+--hive-partition-key nazwisko
+
+sqoop import --connect jdbc:mysql://localhost/sqoop --username root --password cloudera --table emp --hive-import --hive-table default.emp_part_tbl --columns ename,esal --hive-partition-key 'eage' --hive-partition-value '26' --m 1 --verbose --delete-target-dir --target-dir /tmp/13/emp
+
+sqoop import --connect jdbc:mysql://localhost/sqoop --username root --password cloudera --table emp --hive-import --hive-table default.emp_parti_tbl --columns ename,esal --hive-partition-key 'eage' --m 1 --verbose --delete-target-dir --target-dir /tmp/12/emp
+
+sqoop import --connect jdbc:mysql://localhost/sqoop --username root --password cloudera --table student --hive-import --hive-table default.student --m 1 --target-dir /tmp/sqoop/student --incremental append --check-column id
+
+sqoop import --connect jdbc:mysql://localhost/sqoop --username root --password cloudera --table student --hive-import --hive-table default.student --m 1 --target-dir /tmp/sqoop/student --incremental append --check-column id --last-value 4
+
+sqoop import --connect jdbc:mysql://localhost/sqoop --username root --password cloudera --table student_time --hive-import --hive-table default.student_time --m 1 --target-dir /tmp/sqoop/student --incremental lastmodified --check-column ctime
+
+'2017-05-10 00:00:01'
+
+mysql>update student_time set major = 'physics' where id = 3;
+
+2017-07-05 00:00:01
+
+sqoop import --connect jdbc:mysql://localhost/sqoop --username root --password cloudera --table student_time --hive-import --hive-table default.student_time --m 1 --target-dir /tmp/sqoop/student --incremental lastmodified --check-column ctime --last-value '2017-07-05 00:00:01'
+
+sqoop list-tables --connect jdbc:mysql://localhost --username root --password cloudera
+
+sqoop list-databases --connect jdbc:mysql://localhost --username root --password cloudera
+
+sqoop eval -coonect jdbc:mysql://localhost/sqoop --username root --password cloudera --table student -e "select * from student limit 4"
+
+sqoop import --connect jdbc:mysql://localhost/sqoop --username root --password cloudera --null-string \'\\\\N\' --null-non-string \'\\\\N\' --hive-import -
+-hive-table sqoop.emp_new --create-hive-table --hive-drop-import-delimns --table emp --split-by eage
+
+
+
++-----------+------+------+   
+| ename     | esal | eage |
++-----------+------+------+
+| raj       | 2000 |   27 |-done
+| kamal     | 5000 |   28 |-done
+| ravi      | 5000 |   29 |-done
+| pi
+ku     | 5000 |   24 |-done
+| raj
+kamal | 1000 |   30 |-done
+| kk        | 3333 |   26 |
+| kk        | 3333 |   26 |
+| uu        | 2222 |   26 |
+| nn        | 1111 |   26 |
+| pp        | 5555 |   26 |
+| mm        | 4444 |   26 |
++-----------+------+------+=13 records
+
+piku	5000	24-done
+raj	2000	27-done
+kk	3333	26
+kk	3333	26
+uu	2222	26
+nn	1111	26
+pp	5555	26
+mm	4444	26
+kamal	5000	28-done
+ravi	5000	29-donel
+rajkamal	1000	30=11 records
+
+null_data
+
+sqoop import --connect jdbc:mysql://localhost/sqoop --username root --password cloudera --null-string 'rrrr' --null-non-string 999 --hive-import --hive-table default.null_data --table null_data --split-by id --hive-overwrite
+
++------+-----------+
+| id   | name      |
++------+-----------+
+| 1000 | raj
+kamal |
+|    0 | ravi      |
+| 1223 | NULL      |
+| NULL | NULL      |
+| 2000 | piyush    |
+| NULL | piku      |
+| 5555 | NULL      |
++------+-----------+
+
+
+1000	raj
+NULL	NULL
+0	ravi
+1223	rrrr
+2000	piyush
+5555	rrrr
+
+	
+create table hive_array_table(name string, sal int, age array<int>)row format delimited fields terminated by '\t' collection items terminated by ',' stored as textfile;
+
+load data local inpath '/home/cloudera/Desktop/hive_examples/info.txt' into table hive_array_table;
+
+create table Temperature(date string,city string,MyTemp array<double>) row format delimited fields terminated by ‘\t’ collection items terminated by ‘,’;
+
+select name, a from hive_array_table lateral view explode(age) q as a;
+
+create table MySchools(schooltype string,state string,gender string, total map<int,int>) row format delimited fields terminated by '\t' collection items terminated by ',' map keys terminated by ':';
+
+load data local inpath '/home/cloudera/Desktop/hive_examples/school_data.txt' into table MySchools;
+
+create table MyBikes(name string, BikeFeatures struct<EngineType:string,cc:float,power:float,gears:int>) row format delimited fields terminated by ‘\t’ collection items terminated by ‘,’;
+
+load data local inpath '/home/cloudera/Desktop/hive_examples/Bikes.txt' into table MyBikes;
+
+
+pig script:=
+
+raw_data = LOAD '/user/cloudera/pig/customer_data.txt' USING PigStorage(',') AS (custno:chararray, firstname:chararray, lastname:chararray, age:int, profession:chararray);
+
+STORE raw_data INTO 'hbase://customers' USING org.apache.pig.backend.hadoop.hbase.HBaseStorage('customers_data:firstname customers_data:lastname customers_data:age customers_data:profession');
+
+
+//abhishek poc of sqoop and hive
+
+create table student(id int(11), name varchar(20), major varchar(20), ctime tiemstamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP);
+
+insert into student values (1,'studen1','maths','2017-07-10 02:22:25'),(2,'student2','physics','2017-07-10 02:24:26'),(3,'student3','chemistry','2017-07-10 02:25:27'));
+
+sqoop import --connect jdbc:mysql://localhost/test --username root --password cloudera --target-dir 'first_day_sqoop_hdfs' --table student --m 1
+
+insert into student values (4,'student4','maths','2017-07-11 02:44:23'),(5,'student5','physics','2017-07-11 03:24:26');
+
+sqoop import --connect jdbc:mysql://localhost/test --username root --password cloudera --table student --m 1 --target-dir 'second_day_sqoop_hdfs' --incremental lastmodified --check-column ctime --last-value >'2017-07-10 02:25:27:00'
+
+update student set major = 'physics' where id = 3;
+2017-07-11 03:24:26
+
+sqoop import --connect jdbc:mysql://localhost/test --username root --password cloudera --table student --m 1 --target-dir 'first_day_sqoop_hdfs' --incremental lastmodified --check-column ctime --last-value '2017-07-12 02:02:31' --append
+
+
+create external table student_sqoop(id int, name string, major string, ctime timestamp)
+row format delimited fields terminated by ',' lines terminated by '\n' stored as textfile location 'hdfs://quickstart.cloudera:8020/sqoop';
+
+sqoop import --connect jdbc:mysql://localhost/test --username root --password cloudera --target-dir '/sqoop_new' --table emp --m 1
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+Input Data Set:
+id,date
+001,1989/09/26 09:00:00
+002,1980/06/20 10:22:00
+003,1990/12/19 03:11:44
+
+Output Date Set:
+time_stamp,year,month,day
+(1989-09-26T09:00:00.000-07:00,1989,9,26)
+(1980-06-20T10:22:00.000-07:00,1980,6,20)
+(1990-12-19T03:11:44.000-08:00,1990,12,19)
+
+Transformation:
+date_load = LOAD '/user/cloudera/pig/date.txt' USING PigStorage(',') AS(id:int,date:chararray);
+
+Projected = FOREACH date_load GENERATE id,ToDate(date,'yyyy/MM/dd HH:mm:ss') as date_time:datetime;
+
+year_data = FOREACH Projected GENERATE date_time, GetYear(date_time), GetMonth(date_time), GetDay(date_time);
+---------------------------------------------------------------------------------------------------------------
+
+Additional Changes on datetime:
+Projected1 = FOREACH Projected GENERATE id,ToString(date_time,'yyyy-MM-dd HH:mm:ss') as stime;
+(1,1989-09-26 09:00:00)
+(2,1980-06-20 10:22:00)
+(3,1990-12-19 03:11:44)
+
+Projected1 = FOREACH Projected GENERATE id,ToString(date_time,'yyyy-MM-dd') as stime;
+(1,1989-09-26)
+(2,1980-06-20)
+(3,1990-12-19)
+-----------------------------------------------------------------------------------------------------------------------------------------
+create external table pig_output(id int, skill string)partitioned by(year string,month string,day string) row format delimited fields terminated by ',' lines terminated by '\n' stored as textfile location 'hdfs://quickstart.cloudera:8020/user/cloudera/pig_output';
+
+create table pig_op1(id int, skill string year string,month string,day string) row format delimited fields terminated by ',' lines terminated by '\n' stored as textfile;
+
+load data local inpath '/home/cloudera/Desktop/pig_output.txt' overwrite into table pig_op1;
+
+create table pig_op3(id int, skill string)partitioned by(year string,month string,day string) row format delimited fields terminated by ',' lines terminated by '\n' stored as textfile;
+
+set hive.exec.dynamic.partition.mode=nonstrict;
+set hive.exec.dynamic.partition=true;
+
+insert overwrite table pig_op3 partition(year,month,day) select id,skill,year,month,day from pig_op1;
+
+ALTER TABLE pig_op3 DROP IF EXISTS PARTITION(year = 2010, month = 02, day = 11);
+
+ALTER TABLE pig_op3 ADD PARTITION (year ='2010',month='02',day='11');
+
+insert table pig_op3 partition(year='2010',month='02',day='11') select id,skill from pig_op1 where year ='2010'and month='02'and day='11';
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+val r2 = r1.map(rec => people(rec(0).trim, rec(1).toInt, rec(2).trim, rec(3).trim))
+----------------------------------------------------------------------------------------------------------------------------------------------
+create table store(id int,store string,sell int,state string)row format delimited fields terminated by ',' lines terminated by '\n';
+
+load data local inpath '/home/cloudera/Desktop/store.txt' overwrite table store;
+
+
+select state,store,sell from store group by state,store,sell;
+
+mp	store11	1000
+mp	store7	5000
+mp	store8	6000
+mp	store9	4444
+uk	store11	3333
+uk	store7	4444
+uk	store8	1111
+uk	store9	5464
+up	store1	5000
+up	store2	2000
+up	store3	6000
+up	store4	3333
+
+select state,store
+
+select v.state,v.store,v.sell,rank() over (order by v.sell desc) as rank from (select state,store,sell from store group by state,store,sell)v;
+
+
+select state,store,sell,rank() over (group by state order by sell desc limit 3) as rank from store group by state,store,sell order by sell;
+
+select state,store,sell,rank() over(order by state desc,store desc,sell desc) from store group by state,store,sell order by state,store,sell;
+
+select state,store,sell,rank() over(partition by state,store order by sell desc) from store group by state,store,sell order by state,store,sell;
+PARTITION BY category, country ORDER BY sales DESC
+
+--------------------------------------------------------------------------------------------------------------------------------------------------
+SELECT
+ category,country,product,sales,rank
+FROM (
+ SELECT
+   category,country,product,sales,
+   p_rank(category, country) rank
+ FROM (
+   SELECT
+     category,country,product,
+     sales
+   FROM p_rank_demo
+   DISTRIBUTE BY
+     category,country
+   SORT BY
+     category,country,sales desc) t1) t2
+WHERE rank <= 3
+------------------------------------------------------------------------------------------------------------------------------------------------
+select state,store,sell,rank() over(partition by state order by sell) from store group by state,store,sell order by state,store,sell;
+
+select state,store,sell from (select state,store,sell,rank() over(partition by state order by sell) as rank from store group by state,store,sell order by state,store,sell)v where v.rank < 4;
+
+select * from store
+1001	store1	5000	up
+1002	store2	2000	up
+1004	store3	6000	up
+1005	store4	3333	up
+1008	store9	4444	mp
+1009	store7	5000	mp
+1010	store11	1000	mp
+1007	store8	6000	mp
+1012	store9	5464	uk
+1020	store7	4444	uk
+1044	store11	3333	uk
+1017	store8	1111	uk
+
+Final Query: select state,store,sell from (select state,store,sell,rank() over(partition by state order by sell) as rank from store group by state,store,sell order by state,store,sell)v where v.rank < 4;
+mp	store11	1000
+mp	store7	5000
+mp	store9	4444
+uk	store11	3333
+uk	store7	4444
+uk	store8	1111
+up	store1	5000
+up	store2	2000
+up	store4	3333
+
+Query for : By State Top three store by sale
+--------------------------------------------------------------------------------------------------------------------------------------------------
+create table store(id int,store string,sell int,state string)row format delimited fields terminated by ',' lines terminated by '\n';
+load data local inpath '/home/cloudera/Desktop/store.txt' overwrite into table store;
+
+select * from store
+1001	store1	5000	up
+1002	store2	2000	up
+1004	store3	6000	up
+1005	store4	3333	up
+1008	store9	4444	mp
+1009	store7	5000	mp
+1010	store11	1000	mp
+1007	store8	6000	mp
+1012	store9	5464	uk
+1020	store7	4444	uk
+1044	store11	3333	uk
+1017	store8	1111	uk
+
+create table dyn_store1(id int,store string,sell int)partitioned by (state string) row format delimited fields terminated by ',' lines terminated by '\n';
+set hive.exec.dynamic.partition.mode=true;
+set hive.exec.dynamic.partition.mode=nonstrict;
+Query:insert overwrite table dyn_store1 partition(state='up') select id,store,sell,state from store;
+FAILED: SemanticException [Error 10044]: Line 1:23 Cannot insert into target table because column number/types are different ''up'': Table insclause-0 has 3 columns, but query has 4 columns.
+Query:insert overwrite table dyn_store1 partition(up) select id,store,sell,state from store;
+FAILED: SemanticException Partition spec {up=null} contains non-partition columns
+----------------------------------------------------------------------------------------------------------------------------------------------------
+create table mngd_tbl(id int,name string,city string)row format delimited fields terminated by ',' lines terminated by '\n' location '/user/cloudera/managed_tbl_path';
+
+load data local inpath '/home/cloudera/Desktop/source.txt' overwrite into table mngd_tbl;
+
+create table mngd_tbl_new(id int,name string,city string)row format delimited fields terminated by ',' lines terminated by '\n';
+
+load data local inpath '/home/cloudera/Desktop/source.txt' overwrite into table mngd_tbl_new;
+
+alter table mngd_tbl_new set location '/user/cloudera/source';
+
+create external table mngd_tbl_extrnl(id int,name string,city string)row format delimited fields terminated by ',' lines terminated by '\n' location '/user/cloudera/source';
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+userId userName commentDescription(users who have more than 2 comments)
+
+userfile = LOAD '/user/cloudera/datametica/userfile.txt' using PigStorage(',') AS (userId:int,uname:chararray);
+
+commentfile = LOAD '/user/cloudera/datametica/commentfile.txt' using PigStorage(',') AS (commentId:int,commentDes:chararray,userId:int);
+
+joined = JOIN userfile by userId,commentfile by userId;
+
+grouped = GROUP joined BY userId;
+
+cogrouped = COGROUP userfile by userId,commentfile by userId;
+
+counted = FOREACH cogrouped GENERATE group,FLATTEN(userfile.uname),FLATTEN(commentfile.commentDes),COUNT(commentfile.userId);
+
+unique = DISTINCT counted;
+
+1. fltrd = FILTER unique BY $3 >2;
+
+2. result = FOREACH fltrd GENERATE $0..$2;
+
+OR
+
+1. split unique into morethantwo if($3 >2),lessthantwo otherwise;
+
+2. result = FOREACH morethantwo GENERATE $0..$2;
+
+1001	raj	This is about raj
+1002	piyush	This is about piyush	
+
+
+//counted = FOREACH cogrouped GENERATE group,FLATTEN(userfile.uname),FLATTEN(commentfile.commentDes),COUNT(commentfile.userId);
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+create table commentfile_tbl(commentId int,commentDes string,userId int)row format delimited fields terminated by ',' lines terminated by '\n';
+load data local inpath '/home/cloudera/Desktop/Datametica/commentfile.txt' overwrite into table commentfile_tbl;
+
+create table userfile_tbl(userId int,uname string)row format delimited fields terminated by ',' lines terminated by '\n';
+load data local inpath '/home/cloudera/Desktop/Datametica/userfile.txt' overwrite into table userfile_tbl;
+
+select a.userId,a.uname,b.commentDes from userfile_tbl a inner join commentfile_tbl b on a.userId=b.userId group by a.userId,a.uname,b.commentDes having count(a.userId)>2 order by a.userId,a.uname,b.commentDes;
+
+1001	raj	This is about raj
+1002	piyush	This is about piyush
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+def main(args: Array[String]) {
+/**
+   * Create RDD and Apply Transformations
+  */
+ 
+val fruits = sc.textFile("src/main/resources/fruits.txt")
+      .map(_.split(","))
+      .map(frt => Fruits(frt(0).trim.toInt, frt(1), frt(2).trim.toInt))
+      .toDF()
+ 
+/**
+  * Store the DataFrame Data in a Table
+  */
+fruits.registerTempTable("fruits")
+ 
+/**
+   * Select Query on DataFrame
+   */
+val records = sqlContext.sql("SELECT * FROM fruits")
+ 
+ 
+/**
+   * To see the result data of allrecords DataFrame
+   */
+ records.show()
+ 
+  }
+}
+ 
+case class Fruits(id: Int, name: String, quantity: Int)
+
+case class Person(id:Int, name:String, age:Int, city:String)
+val fruits = sc.textFile("file:///home/cloudera/Desktop/csv/fruits.txt").map(_.split(",")).map(frt => Fruits(frt(0).trim.toInt, frt(1), frt(2).trim.toInt)).toDF()
+
+rdd.registerTempTable("fruits")
+
+val records = sqlContext.sql("SELECT * FROM fruits")
+
+records.show()
+
+val fruit = sqlContext.csvFile("file:///home/cloudera/Desktop/csv/fruits.csv")
+
+val df = spark.read.format("com.databricks.spark.csv").option("header", "true").option("mode", "DROPMALFORMED").load("file:///home/cloudera/Desktop/csv/fruits.csv");
+--------------------------------------------------------------------------------------------------------------------------------------------------------
+import org.apache.spark.sql.types.{StructType,StructField,StringType,IntegerType};
+import org.apache.spark.sql.Row;
+
+val csv = sc.textFile("file:///home/cloudera/Desktop/csv/fruits.csv")
+val rows = csv.map(line => line.split(",").map(_.trim))
+val header = rows.first
+val data = rows.filter(_(0) != header(0))
+val rdd = data.map(row => Row(row(0).toInt,row(1),row(2).toInt))  frt(0).trim.toInt, frt(1), frt(2).trim.toInt
+
+val schema = new StructType().add(StructField("id", IntegerType, true)).add(StructField("name", StringType, true)).add(StructField("age", IntegerType, true))
+
+val df = sqlContext.createDataFrame(rdd, schema)
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+javac -cp "/opt/kafka/kafka_2.10-0.10.1.0/libs" ConsumerGroup.java
+
+set path="/opt/jdk1.8.0_121/bin"
+set classpath=%classpath%;.;
+javac XYZ.java
+java XYZ
+
+
+sqoop import --connect jdbc:mysql://localhost/sqoop --username root --password cloudera --table wkly_trns --hive-import --fields-terminated-by ',' --lines-terminated-by '\n' --as-parquetfile --m 1
+
+export SQOOP_HOME="/etc/sqoop"
+
+export HIVE_HOME="/etc/hive"
+
+
+myscript.sh
+
+#!/bin/bash
+#PATH="/home/cloudera/Desktop/unix"
+now="$(date)"
+printf "Current date and time %s\n" "$now"
+ 
+now="$(date +'%d/%m/%Y')"
+printf "Current date in dd/mm/yyyy format %s\n" "$now"
+ 
+echo "Starting backup at $now, please wait..."
+# command to backup scripts goes here
+# ...
+
+exec >> /home/cloudera/Desktop/unix/script.log.$(date +%d) 2>&1
+
+#running sqoop script for import data from mysql server to hdfs
+
+echo "This script is about to run sqoop job script."
+
+(exec /home/cloudera/Desktop/unix/sqoop.sh) > /home/cloudera/Desktop/unix/sqoop_job.log 2>&1
+RF=$?
+#echo $RF
+if [ $RF -eq 0 ]; then
+	echo "sqoop job ran successfully..."
+else
+	echo "sqoop job failed"
+fi
+
+----------------##sqoop script
+#!/bin/bash
+MY_MESSAGE="Hello World"
+echo $MY_MESSAGE
+
+DB_NAME="test"
+TBL_NAME="emp"
+HDFS_PATH="'/user/raj/sqoop_mysql_data'"
+NUM_MAPPER="1"
+
+USER_NAME="roor"
+PASSWORD="cloudera"
+
+sqoop import --connect jdbc:mysql://localhost/${DB_NAME} --username ${USER_NAME} --password ${PASSWORD} --target-dir ${HDFS_PATH} --table ${TBL_NAME} --m ${NUM_MAPPER}
+-----------------
+#!/bin/bash
+MY_MESSAGE="Hello World"
+echo $MY_MESSAGE
+
+DB_NAME="test"
+TBL_NAME="emp"
+HDFS_PATH="'/user/raj/sqoop_mysql_data'"
+NUM_MAPPER="1"
+
+USER_NAME="roor"
+PASSWORD="cloudera"
+
+sqoop import --connect jdbc:mysql://localhost/${DB_NAME} --username ${USER_NAME} --password ${PASSWORD} --target-dir ${HDFS_PATH} --table ${TBL_NAME} --m ${NUM_MAPPER}
+-----------------------
+
+myscript.sh
+
+#!/bin/bash
+#PATH="/home/cloudera/Desktop/unix"
+now="$(date)"
+printf "Current date and time %s\n" "$now"
+ 
+now="$(date +'%d/%m/%Y')"
+printf "Current date in dd/mm/yyyy format %s\n" "$now"
+ 
+echo "Starting backup at $now, please wait..."
+# command to backup scripts goes here
+# ...
+
+exec >> /home/cloudera/Desktop/unix/script.log.$(date +%d) 2>&1
+
+#running sqoop script for import data from mysql server to hive table directly
+
+echo "This script is about to run sqoop job script."
+
+(exec /home/cloudera/Desktop/scripts/sqoop.sh) > /home/cloudera/Desktop/unix/sqoop_job.log 2>&1
+RF=$?
+#echo $RF
+if [ $RF -eq 0 ]; then
+	echo "sqoop job ran successfully..."
+else
+	echo "sqoop job failed"
+fi
+
+#running spark-sql script for calculating avg sells over hive table
+
+echo "This script is about to run spark-sql job script."
+
+(exec /home/cloudera/Desktop/scripts/spark-sql.sh) > /home/cloudera/Desktop/unix/spark-sql_job.log 2>&1
+RF=$?
+#echo $RF
+if [ $RF -eq 0 ]; then
+	echo "sqoop job ran successfully..."
+else
+	echo "sqoop job failed"
+fi
+-------------------------------------------------------------------------------
+DR Design Work###----
+create table sentiment(B varchar(65535),C varchar(65535),D varchar(65535),J varchar(65535),X varchar(65535),M varchar(65535),N varchar(65535),W varchar(65535),AU varchar(65535));
+
+LOAD DATA LOCAL INFILE '/home/cloudera/Desktop/DR/DBFile' INTO TABLE sentiment FIELDS TERMINATED BY '|' LINES TERMINATED BY '\n';
+
+LOAD DATA LOCAL INFILE '/home/cloudera/Desktop/DR/newfile' INTO TABLE sentiment FIELDS TERMINATED BY '|' LINES TERMINATED BY '\n';
+
+create table sentiment(B string,C string,D string,J string,X string,M string,N string,W string,AU string)row format delimited fields terminated by '|' lines terminated by '\n';
+
+
+load data local inpath '/home/cloudera/Desktop/DR/DBFile.csv' overwrite into table sentiment;
+
+B,C,D,J,X,M,N,W,AU
+
+select B,C,D,J,X,M from sentiment;
+
+create table sentiment1(sentiment1 string)row format delimited lines terminated by '\n';
+sentimen1 path: hdfs://quickstart.cloudera:8020/user/hive/warehouse/sentiment1
+
+hadoop fs -copyToLocal hdfs://quickstart.cloudera:8020/user/hive/warehouse/sentiment1/* /home/cloudera/Desktop/DR/sentiment1
+
+
+
+
+
+
+
+
+
+
+
+
+
